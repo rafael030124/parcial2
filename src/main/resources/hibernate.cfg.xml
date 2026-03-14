@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory>
+        <!-- H2 en modo servidor -->
+        <property name="hibernate.connection.driver_class">
+            org.h2.Driver
+        </property>
+        <property name="hibernate.connection.url">
+            jdbc:h2:tcp://localhost:9092/~/eventosdb;IFEXISTS=FALSE
+        </property>
+        <property name="hibernate.connection.username">sa</property>
+        <property name="hibernate.connection.password"></property>
+
+        <!-- Dialecto H2 -->
+        <property name="hibernate.dialect">
+            org.hibernate.dialect.H2Dialect
+        </property>
+
+        <!-- update = crea tablas si no existen, no borra datos -->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.show_sql">false</property>
+        <property name="hibernate.format_sql">true</property>
+
+        <!-- Entidades (agregar aquí cada modelo que crees) -->
+        <mapping class="edu.pucmm.icc352.models.User"/>
+        <mapping class="edu.pucmm.icc352.models.Event"/>
+        <mapping class="edu.pucmm.icc352.models.Registration"/>
+        <mapping class="edu.pucmm.icc352.models.Attendance"/>
+    </session-factory>
+</hibernate-configuration>
