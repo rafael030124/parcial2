@@ -4,16 +4,25 @@ import edu.pucmm.icc352.config.HibernateConfig;
 import edu.pucmm.icc352.controllers.*;
 import edu.pucmm.icc352.utils.SeedData;
 import io.javalin.Javalin;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.javalin.json.JavalinJackson;
+
 
 public class Main {
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
 
         // 1. Inicializar Hibernate
         HibernateConfig.init();
 
         // 2. Crear admin por defecto
         SeedData.createDefaultAdmin();
+
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         // 3. Crear app Javalin 7
         // En Javalin 7: config.routes es un campo, no un metodo
