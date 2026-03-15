@@ -118,7 +118,7 @@ public class EventController {
                 return;
             }
             long eventId = Long.parseLong(ctx.pathParam("id"));
-            ctx.json(svc.cancel(eventId, userId));
+            ctx.json(svc.cancel(eventId, userId)); //si
         });
     }
 }
