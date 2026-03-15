@@ -10,24 +10,50 @@ public class HibernateConfig {
     private static Server h2Server;
 
     public static void init() {
+        String dbHost = System.getenv("DB_HOST");
+
+        if (dbHost == null || dbHost.isEmpty()) {
+            startEmbeddedH2();
+        } else {
+            System.out.println("Modo Docker: conectando a H2 en " + dbHost);
+        }
+
+        String host = dbHost != null ? dbHost : "localhost";
+        String port = System.getenv("DB_PORT") != null ? System.getenv("DB_PORT") : "9092";
+        String name = System.getenv("DB_NAME") != null ? System.getenv("DB_NAME") : "eventosdb";
+        String url  = "jdbc:h2:tcp://" + host + ":" + port + "/~/" + name + ";IFEXISTS=FALSE";
+
+        // Retry hasta que H2 esté listo
+        int attempts = 0;
+        while (attempts < 10) {
+            try {
+                sessionFactory = new Configuration()
+                        .configure("hibernate.cfg.xml")
+                        .setProperty("hibernate.connection.url", url)
+                        .buildSessionFactory();
+                System.out.println("Hibernate conectado: " + url);
+                return;
+            } catch (Exception e) {
+                attempts++;
+                System.out.println("H2 no listo, reintento " + attempts + "/10...");
+                try { Thread.sleep(3000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+            }
+        }
+        throw new RuntimeException("No se pudo conectar a H2 después de 10 intentos");
+    }
+
+    private static void startEmbeddedH2() {
         try {
-            // Arranca H2 en modo servidor automáticamente
             h2Server = Server.createTcpServer(
                     "-tcp",
                     "-tcpAllowOthers",
                     "-tcpPort", "9092",
                     "-ifNotExists"
             ).start();
-            System.out.println("H2 Server corriendo en puerto 9092");
+            System.out.println("H2 Server arrancado en puerto 9092");
         } catch (Exception e) {
             throw new RuntimeException("No se pudo iniciar H2: " + e.getMessage());
         }
-
-        sessionFactory = new Configuration()
-                .configure("hibernate.cfg.xml")
-                .buildSessionFactory();
-
-        System.out.println("Hibernate conectado a H2");
     }
 
     public static SessionFactory getSessionFactory() {

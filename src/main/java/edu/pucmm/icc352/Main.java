@@ -7,7 +7,7 @@ import io.javalin.Javalin;
 
 public class Main {
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
 
         // 1. Inicializar Hibernate
         HibernateConfig.init();
@@ -49,7 +49,7 @@ public class Main {
             });
         });
 
-        app.start(7000);
+        app.start(8080);
 
         System.out.println("Servidor corriendo en http://localhost:8080");
     }
