@@ -40,10 +40,17 @@
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
             <div>
-              <label class="form-label" for="ev-datetime">Fecha y hora <span class="req">*</span></label>
+              <label class="form-label" for="ev-datetime">Inicio <span class="req">*</span></label>
               <input type="datetime-local" class="form-control" id="ev-datetime" required/>
               <div class="invalid-feedback">Selecciona una fecha futura.</div>
             </div>
+            <div>
+              <label class="form-label" for="ev-end-datetime">Fin <span class="req">*</span></label>
+              <input type="datetime-local" class="form-control" id="ev-end-datetime" required/>
+              <div class="invalid-feedback">Debe ser posterior a la fecha de inicio.</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px">
             <div>
               <label class="form-label" for="ev-location">Lugar <span class="req">*</span></label>
               <input type="text" class="form-control" id="ev-location" placeholder="Auditorio Principal" required minlength="3"/>
@@ -272,7 +279,7 @@
         </div>
         ${statusStepper(e.status)}
         <div class="event-card-meta" style="margin-top:10px">
-          <span><i class="bi bi-calendar3"></i> ${fmtDateTime(e.dateTime)}</span>
+          <span><i class="bi bi-calendar3"></i> ${fmtDateTime(e.dateTime)}${e.endDateTime ? ` - ${fmtDateTime(e.endDateTime)}` : ''}</span>
           <span><i class="bi bi-geo-alt"></i> ${e.location}</span>
           <span><i class="bi bi-people"></i> Capacidad: ${e.maxCapacity}</span>
         </div>
@@ -297,7 +304,7 @@
   function eventTableRow(e) {
     return `<tr class="animate-in">
       <td style="font-weight:600">${e.title}</td>
-      <td style="font-size:12px;white-space:nowrap;color:var(--text-secondary)">${fmtDateTime(e.dateTime)}</td>
+      <td style="font-size:12px;white-space:nowrap;color:var(--text-secondary)">${fmtDateTime(e.dateTime)}${e.endDateTime ? ` - ${fmtDateTime(e.endDateTime)}` : ''}</td>
       <td style="font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.location}</td>
       <td style="font-size:13px;text-align:center">${e.maxCapacity}</td>
       <td>${eventStatusBadge(e.status)}</td>
@@ -323,7 +330,7 @@
     document.getElementById('ev-id').value = eventId || '';
 
     /* Clear validation */
-    ['ev-title','ev-datetime','ev-location','ev-capacity'].forEach(id =>
+    ['ev-title','ev-datetime','ev-end-datetime','ev-location','ev-capacity'].forEach(id =>
       document.getElementById(id).classList.remove('is-invalid','is-valid')
     );
 
@@ -340,15 +347,29 @@
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         document.getElementById('ev-datetime').value = d.toISOString().slice(0,16);
       }
+      if (ev.endDateTime) {
+        const dEnd = new Date(ev.endDateTime);
+        dEnd.setMinutes(dEnd.getMinutes() - dEnd.getTimezoneOffset());
+        document.getElementById('ev-end-datetime').value = dEnd.toISOString().slice(0,16);
+      } else if (ev.dateTime) {
+        const dEnd = new Date(ev.dateTime);
+        dEnd.setHours(dEnd.getHours() + 2);
+        dEnd.setMinutes(dEnd.getMinutes() - dEnd.getTimezoneOffset());
+        document.getElementById('ev-end-datetime').value = dEnd.toISOString().slice(0,16);
+      }
     } else {
       document.getElementById('form-event').reset();
       document.getElementById('desc-count').textContent = '0';
       const tom = new Date(); tom.setDate(tom.getDate()+1); tom.setHours(9,0,0,0);
       tom.setMinutes(tom.getMinutes() - tom.getTimezoneOffset());
       document.getElementById('ev-datetime').value = tom.toISOString().slice(0,16);
+      const tomEnd = new Date(tom);
+      tomEnd.setHours(tomEnd.getHours() + 2);
+      document.getElementById('ev-end-datetime').value = tomEnd.toISOString().slice(0,16);
     }
     const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('ev-datetime').min = now.toISOString().slice(0,16);
+    document.getElementById('ev-end-datetime').min = now.toISOString().slice(0,16);
 
     openModal('modal-event-form');
     setTimeout(() => document.getElementById('ev-title').focus(), 80);
@@ -358,6 +379,7 @@
     const id       = document.getElementById('ev-id').value;
     const title    = document.getElementById('ev-title');
     const datetime = document.getElementById('ev-datetime');
+    const endDateTime = document.getElementById('ev-end-datetime');
     const capacity = document.getElementById('ev-capacity');
     const location = document.getElementById('ev-location');
     const desc     = document.getElementById('ev-description');
@@ -365,13 +387,19 @@
     let ok = true;
     if (!validateField(title,    Rules.minLen(3)))   ok = false;
     if (!validateField(datetime, Rules.required))    ok = false;
+    if (!validateField(endDateTime, Rules.required)) ok = false;
     if (!validateField(capacity, Rules.positiveInt)) ok = false;
     if (!validateField(location, Rules.minLen(3)))   ok = false;
+    if (ok && new Date(endDateTime.value) <= new Date(datetime.value)) {
+      endDateTime.classList.add('is-invalid');
+      ok = false;
+    }
     if (!ok) { showToast('Revisa los campos en rojo', 'warning', 'Formulario incompleto'); return; }
 
     const payload = {
       title:       title.value.trim(),
       dateTime:    datetime.value + (datetime.value.includes('T') && !datetime.value.includes(':',14) ? ':00' : ''),
+      endDateTime: endDateTime.value + (endDateTime.value.includes('T') && !endDateTime.value.includes(':',14) ? ':00' : ''),
       maxCapacity: parseInt(capacity.value),
       location:    location.value.trim(),
       description: desc.value.trim()
@@ -436,7 +464,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div>
             <div class="section-label">Fecha y Hora</div>
-            <div style="font-size:14px"><i class="bi bi-calendar3" style="color:var(--accent);margin-right:6px"></i>${fmtDateTime(e.dateTime)}</div>
+            <div style="font-size:14px"><i class="bi bi-calendar3" style="color:var(--accent);margin-right:6px"></i>${fmtDateTime(e.dateTime)}${e.endDateTime ? ` - ${fmtDateTime(e.endDateTime)}` : ''}</div>
           </div>
           <div>
             <div class="section-label">Capacidad</div>

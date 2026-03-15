@@ -48,10 +48,12 @@ public class EventController {
                 return;
             }
             Map<String, Object> b = (Map<String, Object>) ctx.bodyAsClass(Map.class);
+            String endDateTimeRaw = (String) b.get("endDateTime");
             Event event = svc.create(
                     (String) b.get("title"),
                     (String) b.get("description"),
                     LocalDateTime.parse((String) b.get("dateTime")),
+                    endDateTimeRaw == null || endDateTimeRaw.isBlank() ? null : LocalDateTime.parse(endDateTimeRaw),
                     (String) b.get("location"),
                     ((Number) b.get("maxCapacity")).intValue(),
                     userId
@@ -73,11 +75,13 @@ public class EventController {
             }
             long eventId = Long.parseLong(ctx.pathParam("id"));
             Map<String, Object> b = (Map<String, Object>) ctx.bodyAsClass(Map.class);
+            String endDateTimeRaw = (String) b.get("endDateTime");
             ctx.json(svc.update(
                     eventId, userId,
                     (String) b.get("title"),
                     (String) b.get("description"),
                     LocalDateTime.parse((String) b.get("dateTime")),
+                    endDateTimeRaw == null || endDateTimeRaw.isBlank() ? null : LocalDateTime.parse(endDateTimeRaw),
                     (String) b.get("location"),
                     ((Number) b.get("maxCapacity")).intValue()
             ));

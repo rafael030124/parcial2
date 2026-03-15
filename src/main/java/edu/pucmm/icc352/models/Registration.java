@@ -1,5 +1,6 @@
 package edu.pucmm.icc352.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -29,6 +30,10 @@ public class Registration {
     @Column(nullable = false, unique = true)
     private String qrToken;
 
+    @JsonIgnore
+    @OneToOne(mappedBy = "registration", fetch = FetchType.EAGER)
+    private Attendance attendance;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime registeredAt = LocalDateTime.now();
 
@@ -48,4 +53,6 @@ public class Registration {
     public Event getEvent()                  { return event; }
     public String getQrToken()               { return qrToken; }
     public LocalDateTime getRegisteredAt()   { return registeredAt; }
+    public boolean isAttended()              { return attendance != null; }
+    public LocalDateTime getScannedAt()      { return attendance != null ? attendance.getScannedAt() : null; }
 }

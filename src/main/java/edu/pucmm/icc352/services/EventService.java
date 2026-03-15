@@ -11,7 +11,7 @@ public class EventService {
     private final EventRepository repo     = new EventRepository();
     private final UserRepository  userRepo = new UserRepository();
 
-    public Event create(String title, String description, LocalDateTime dateTime,
+    public Event create(String title, String description, LocalDateTime dateTime, LocalDateTime endDateTime,
                         String location, int maxCapacity, Long organizerId) {
         User organizer = userRepo.findById(organizerId)
                 .orElseThrow(() -> new IllegalArgumentException("Organizador no encontrado."));
@@ -19,15 +19,18 @@ public class EventService {
             throw new IllegalArgumentException("La fecha del evento debe ser futura.");
         if (maxCapacity < 1)
             throw new IllegalArgumentException("El cupo debe ser al menos 1.");
-        return repo.save(new Event(title, description, dateTime, location, maxCapacity, organizer));
+        LocalDateTime effectiveEnd = normalizeEndDateTime(dateTime, endDateTime);
+        return repo.save(new Event(title, description, dateTime, effectiveEnd, location, maxCapacity, organizer));
     }
 
     public Event update(Long eventId, Long requesterId, String title, String description,
-                        LocalDateTime dateTime, String location, int maxCapacity) {
+                        LocalDateTime dateTime, LocalDateTime endDateTime, String location, int maxCapacity) {
         Event event = getEditableEvent(eventId, requesterId);
+        LocalDateTime effectiveEnd = normalizeEndDateTime(dateTime, endDateTime);
         event.setTitle(title);
         event.setDescription(description);
         event.setDateTime(dateTime);
+        event.setEndDateTime(effectiveEnd);
         event.setLocation(location);
         event.setMaxCapacity(maxCapacity);
         return repo.update(event);
@@ -72,5 +75,13 @@ public class EventService {
         if (!isAdmin && !isOwner)
             throw new SecurityException("No tienes permiso para modificar este evento.");
         return event;
+    }
+
+    private LocalDateTime normalizeEndDateTime(LocalDateTime start, LocalDateTime end) {
+        LocalDateTime effectiveEnd = end == null ? start.plusHours(2) : end;
+        if (!effectiveEnd.isAfter(start)) {
+            throw new IllegalArgumentException("La fecha de termino debe ser posterior al inicio.");
+        }
+        return effectiveEnd;
     }
 }

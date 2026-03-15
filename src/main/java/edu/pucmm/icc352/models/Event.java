@@ -19,6 +19,9 @@ public class Event {
     @Column(nullable = false)
     private LocalDateTime dateTime;
 
+    @Column
+    private LocalDateTime endDateTime;
+
     @Column(nullable = false, length = 200)
     private String location;
 
@@ -41,10 +44,11 @@ public class Event {
     public Event() {}
 
     public Event(String title, String description, LocalDateTime dateTime,
-                 String location, int maxCapacity, User organizer) {
+                 LocalDateTime endDateTime, String location, int maxCapacity, User organizer) {
         this.title = title;
         this.description = description;
         this.dateTime = dateTime;
+        this.endDateTime = endDateTime;
         this.location = location;
         this.maxCapacity = maxCapacity;
         this.organizer = organizer;
@@ -58,6 +62,8 @@ public class Event {
     public void setDescription(String d)        { this.description = d; }
     public LocalDateTime getDateTime()          { return dateTime; }
     public void setDateTime(LocalDateTime dt)   { this.dateTime = dt; }
+    public LocalDateTime getEndDateTime()       { return endDateTime; }
+    public void setEndDateTime(LocalDateTime e) { this.endDateTime = e; }
     public String getLocation()                 { return location; }
     public void setLocation(String l)           { this.location = l; }
     public int getMaxCapacity()                 { return maxCapacity; }

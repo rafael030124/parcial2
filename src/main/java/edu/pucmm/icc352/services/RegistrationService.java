@@ -36,11 +36,15 @@ public class RegistrationService {
     }
 
     public Attendance markAttendance(String qrToken) {
-        Registration reg = regRepo.findByToken(qrToken)
+        String normalizedToken = qrToken == null ? "" : qrToken.trim();
+        if (normalizedToken.isEmpty()) {
+            throw new IllegalArgumentException("QR invalido o vacio.");
+        }
+
+        Registration reg = regRepo.findByToken(normalizedToken)
                 .orElseThrow(() -> new IllegalArgumentException("QR invalido o no encontrado."));
-        if (attRepo.existsByRegistration(reg.getId()))
-            throw new IllegalStateException("Asistencia ya registrada para este QR.");
-        return attRepo.save(new Attendance(reg));
+        return attRepo.findByRegistration(reg.getId())
+                .orElseGet(() -> attRepo.save(new Attendance(reg)));
     }
 
     public byte[] generateQRImage(String qrToken) {
