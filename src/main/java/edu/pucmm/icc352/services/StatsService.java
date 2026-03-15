@@ -57,6 +57,6 @@ public class StatsService {
             entry.put("count", row[1]);
             result.add(entry);
         }
-        return result;
+        return result; //s
     }
 }
