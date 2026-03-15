@@ -19,8 +19,6 @@ public class Main {
         // 2. Crear admin por defecto
         SeedData.createDefaultAdmin();
 
-
-
         // 3. Crear app Javalin 7
         // En Javalin 7: config.routes es un campo, no un metodo
         // Los exception handlers van encadenados despues del create(), antes del start()
