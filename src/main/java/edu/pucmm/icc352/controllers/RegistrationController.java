@@ -52,6 +52,29 @@ public class RegistrationController {
             ctx.json(regs);
         });
 
+        // Escanear QR y marcar asistencia - solo ORGANIZER o ADMIN
+        ApiBuilder.post("/api/registrations/scan", ctx -> {
+            Long userId = ctx.sessionAttribute("userId");
+            String role = ctx.sessionAttribute("role");
+            if (userId == null) {
+                ctx.status(401).json(Map.of("error", "No autenticado."));
+                return;
+            }
+            if ("PARTICIPANT".equals(role)) {
+                ctx.status(403).json(Map.of("error", "Sin permiso."));
+                return;
+            }
+            Map<String, Object> b = (Map<String, Object>) ctx.bodyAsClass(Map.class);
+            String token = (String) b.get("qrToken");
+            Attendance att = svc.markAttendance(token);
+            ctx.status(201).json(Map.of(
+                    "message",    "Asistencia registrada.",
+                    "scannedAt",  att.getScannedAt().toString(),
+                    "attendeeId", att.getRegistration().getUser().getId(),
+                    "attendee",   att.getRegistration().getUser().getName()
+            ));
+        });
+
         // Inscribirse a un evento
         ApiBuilder.post("/api/registrations/{eventId}", ctx -> {
             Long userId = ctx.sessionAttribute("userId");
@@ -83,29 +106,6 @@ public class RegistrationController {
             long eventId = Long.parseLong(ctx.pathParam("eventId"));
             svc.cancel(userId, eventId);
             ctx.json(Map.of("message", "Inscripcion cancelada."));
-        });
-
-        // Escanear QR y marcar asistencia - solo ORGANIZER o ADMIN
-        ApiBuilder.post("/api/registrations/scan", ctx -> {
-            Long userId = ctx.sessionAttribute("userId");
-            String role = ctx.sessionAttribute("role");
-            if (userId == null) {
-                ctx.status(401).json(Map.of("error", "No autenticado."));
-                return;
-            }
-            if ("PARTICIPANT".equals(role)) {
-                ctx.status(403).json(Map.of("error", "Sin permiso."));
-                return;
-            }
-            Map<String, Object> b = (Map<String, Object>) ctx.bodyAsClass(Map.class);
-            String token = (String) b.get("qrToken");
-            Attendance att = svc.markAttendance(token);
-            ctx.status(201).json(Map.of(
-                    "message",    "Asistencia registrada.",
-                    "scannedAt",  att.getScannedAt().toString(),
-                    "attendeeId", att.getRegistration().getUser().getId(),
-                    "attendee",   att.getRegistration().getUser().getName()
-            ));
         });
     }
 }
