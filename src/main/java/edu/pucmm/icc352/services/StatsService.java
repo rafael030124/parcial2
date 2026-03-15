@@ -21,16 +21,8 @@ public class StatsService {
         long totalAsistentes = evtRepo.countAttendance(eventId);
         double porcentaje    = totalInscritos == 0 ? 0
                 : Math.round((totalAsistentes * 100.0 / totalInscritos) * 10) / 10.0;
-        long ausentes = Math.max(totalInscritos - totalAsistentes, 0);
 
         Map<String, Object> stats = new LinkedHashMap<>();
-        // English keys consumed by current frontend dashboards.
-        stats.put("totalRegistrations", totalInscritos);
-        stats.put("totalAttendances",  totalAsistentes);
-        stats.put("attendanceRate",    porcentaje);
-        stats.put("absentees",         ausentes);
-
-        // Spanish aliases kept for compatibility.
         stats.put("totalInscritos",       totalInscritos);
         stats.put("totalAsistentes",      totalAsistentes);
         stats.put("porcentajeAsistencia", porcentaje);
